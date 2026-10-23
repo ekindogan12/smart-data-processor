@@ -1,6 +1,9 @@
 """Shared validation rules and actionable public exceptions."""
 
 from collections.abc import Sequence
+from datetime import date, datetime
+from decimal import Decimal
+from numbers import Real
 
 import pandas as pd
 
@@ -45,3 +48,36 @@ def validate_columns(
     if unknown:
         raise DataValidationError(f"Unknown columns in {option}: {unknown}.")
     return selected
+
+
+def scalar_kind(value: object) -> str:
+    """Classify supported spreadsheet scalars without interpreting strings."""
+    if isinstance(value, str):
+        return "text"
+    if pd.api.types.is_bool(value):
+        return "boolean"
+    if isinstance(value, (Real, Decimal)):
+        return "numeric"
+    if isinstance(value, (datetime, date)):
+        return "datetime"
+    return "unsupported"
+
+
+def series_kind(series: pd.Series) -> str:
+    """Combine declared dtype with observed values, including imported objects."""
+    if isinstance(series.dtype, pd.CategoricalDtype):
+        values = series.cat.categories.tolist()
+    else:
+        values = series.dropna().tolist()
+    if values:
+        kinds = {scalar_kind(value) for value in values}
+        return next(iter(kinds)) if len(kinds) == 1 else "mixed"
+    if pd.api.types.is_bool_dtype(series.dtype):
+        return "boolean"
+    if pd.api.types.is_numeric_dtype(series.dtype):
+        return "numeric"
+    if pd.api.types.is_datetime64_any_dtype(series.dtype):
+        return "datetime"
+    if isinstance(series.dtype, pd.StringDtype):
+        return "text"
+    return "empty"
