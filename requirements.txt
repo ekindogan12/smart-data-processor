@@ -1,0 +1,2 @@
+# Install the local package and its test dependencies from pyproject.toml.
+-e .[test]

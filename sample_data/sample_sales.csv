@@ -1,0 +1,11 @@
+order_id,order_date,customer_name,email,region,product,quantity,unit_price,status
+001001,2026-09-01,Ana García,ana@example.com,East,Desk Lamp,2,34.90,Paid
+001002,2026-09-01,Marcus Reed,marcus@example.com,North,Office Chair,1,149.00,Paid
+001003,2026-09-02,Leila Haddad,leila@example.com,South,Notebook Pack,3,12.50,Pending
+001002,2026-09-01,Marcus Reed,marcus@example.com,North,Office Chair,1,149.00,Paid
+001004,2026-09-03,Noah Chen,,West,Monitor Stand,1,45.00,Pending
+001005,2026-09-03,Sofia Costa,sofia@example.com,,Desk Lamp,2,34.90,Paid
+001006,2026-09-04,Alex Morgan,Alex@example.com,North,USB Hub,,24.95,Pending
+001007,2026-09-04,Alex Morgan,alex@example.com,North,USB Hub,1,24.95,Paid
+001008,05/09/2026, Priya Shah ,priya@example.com,East,Keyboard,1,,Pending
+001009,2026-09-05,Jordan Lee,jordan@example.com,NA,"Cable, USB-C",4,8.50,Paid

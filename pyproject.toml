@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-data-processor"
+version = "0.1.0"
+description = "A non-destructive CSV and Excel data profiling and cleaning engine"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["pandas>=2.2,<4", "openpyxl>=3.1,<4"]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
