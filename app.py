@@ -1,1 +1,5 @@
-"""Reserved application entry point. The Streamlit UI belongs to Phase 3."""
+"""Local dashboard entry point: python -m streamlit run app.py."""
+
+from smart_data_processor.dashboard import main
+
+main()

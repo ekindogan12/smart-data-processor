@@ -121,7 +121,14 @@ class ProcessingPipeline:
                 errors=tuple(original_issue(issue) for issue in result.errors),
                 renamed_columns=result.renamed_columns,
             ))
+            # Coordinate provenance follows positional row filtering. Formula
+            # inventory remains conservative even if a formula row is removed.
+            source = deepcopy(current.attrs.get("xlsx_source"))
             current = result.data
+            if source is not None:
+                if result.retained_positions is not None:
+                    source["row_numbers"] = tuple(source["row_numbers"][pos] for pos in result.retained_positions)
+                current.attrs["xlsx_source"] = source
             if result.retained_positions is not None:
                 row_ids = [row_ids[position] for position in result.retained_positions]
             if result.errors and self._stop_on_error:

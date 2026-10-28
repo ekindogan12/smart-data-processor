@@ -1,7 +1,7 @@
 """Public API for the independent data processing engine."""
 
 from .cleaner import handle_missing, remove_duplicates
-from .file_handler import load_dataset
+from .file_handler import inspect_xlsx_import, inspect_xlsx_layouts, list_worksheets, load_dataset, load_xlsx_regions
 from .profiler import ColumnProfile, DatasetProfile, profile_dataset
 from .validators import DataValidationError, FileValidationError
 from .models import Issue, OperationResult
@@ -15,6 +15,10 @@ __all__ = [
     "DatasetProfile",
     "FileValidationError",
     "load_dataset",
+    "list_worksheets",
+    "inspect_xlsx_import",
+    "inspect_xlsx_layouts",
+    "load_xlsx_regions",
     "profile_dataset",
     "remove_duplicates",
     "handle_missing",

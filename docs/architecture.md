@@ -1,10 +1,10 @@
-# Phase 1 and Phase 2 architecture decisions
+# Phase 1–3 architecture decisions
 
 The proposal is the specification; its phase boundaries take precedence over the
 full-product acceptance criteria. The current deliverable is a tested Python
 library for imports, profiling, cleaning, transformations, ordered processing,
-structured reports, and safe exports. Exports were explicitly requested for
-Phase 2; the Streamlit interface remains deferred to Phase 3.
+structured reports, and safe exports, with a local Streamlit dashboard in Phase 3.
+Exports were explicitly requested and implemented in Phase 2.
 
 ## Module boundaries
 
@@ -15,16 +15,30 @@ ValueError subclasses so a future UI can display actionable validation failures.
 it has no file output responsibilities. `cleaner` accepts and returns DataFrames,
 allowing scripts, tests, and a later UI to use the same engine.
 
+`excel_import` builds an immutable range/header import plan from worksheet records.
+It owns empty-column classification and deterministic header naming, with no I/O
+or Streamlit dependency. Inspection and loading use the same planner so their
+exclusion and naming decisions agree; columns are selected by position to prevent
+duplicate names from overwriting data.
+
+`excel_layout` owns geometric region detection, exact empty margins/ranges and
+coordinate-labeled worksheet previews. Eight-neighbor occupied-cell components
+produce rectangular suggestions; overlapping boxes are coalesced to prevent
+duplicate coverage. This handles the actual workbook's detached formulas, which
+invalidate a whole-sheet blank-separator-only algorithm. It is not semantic table
+recognition: sparse tables may split and touching tables may share a suggestion.
+
 `transformer` owns explicit text/header normalization and numeric/date conversion.
 `models` contains shared operation results and diagnostics. `pipeline` orchestrates
 operations and translates row provenance; `reporter` defines audit records and
 byte serialization. The two additional modules keep orchestration separate from
 individual operations and avoid circular imports.
 
-`app.py` remains an empty documented entry point. The screenshot directory reserves
-future interface documentation. Phase 1 loaders, profiling, and duplicate removal
-remain intact; a pipeline adapter adds duplicate-removal provenance without
-changing its existing DataFrame-returning API.
+`app.py` calls the dashboard's `main` function. `dashboard` owns widgets and
+presentation, while `dashboard_state` owns testable session transitions and input
+adapters without importing Streamlit. No engine module depends on either UI module.
+Phase 1 loaders, profiling, and duplicate removal remain intact; a pipeline adapter
+adds duplicate-removal provenance without changing its existing DataFrame API.
 
 ## Preservation over inference
 
@@ -173,9 +187,10 @@ on serialized output and cannot modify the processing result.
 
 ## Dependency and verification choices
 
-Only pandas and openpyxl are runtime dependencies. The standard library handles
+Only pandas and openpyxl are engine runtime dependencies. The optional `ui` extra
+adds Streamlit; `requirements.txt` includes the UI and test extras. The standard library handles
 encoding, CSV parsing, archive validation, paths, and profile data structures.
-Pytest is the only test dependency. Editable package installation avoids runtime
+Pytest runs the suite, with AppTest supplied by Streamlit. Editable installation avoids runtime
 path manipulation in tests. Tests use temporary files and in-memory workbooks,
 plus the committed synthetic samples for end-to-end coverage. They check source
 preservation, malformed inputs, encoding/worksheet selection, profile statistics,
@@ -185,12 +200,236 @@ protection in headers and cells, precision preservation, and export limits.
 
 Python 3.11+ is the declared target; the test results reported at implementation
 time cover the available local interpreter, not a full cross-version matrix.
-No new runtime dependencies were needed for Phase 2. No database, web framework,
-plotting package, or cloud service is required.
+No new runtime dependencies were needed for Phase 2. Phase 3 adds Streamlit and its
+transitive dependencies, with no separate plotting library, database, or cloud service.
 
-## Phase 3 boundary
+## Phase 3: local dashboard
 
-The next phase can provide upload and worksheet controls, ordered step configuration,
-before/after previews, explicit application confirmation, visible diagnostics, and
-download controls backed by these APIs. It should display stopped/partial execution
-and export protection warnings. There is no Streamlit implementation in this phase.
+The UI is a single page with sidebar links to Upload, Data Overview, Cleaning
+Configuration, Results, and Download. Native Streamlit controls, bordered metrics,
+clear primary actions, a light theme, and responsive columns keep the presentation
+minimal. Static CSS never interpolates uploaded content. Uploaded cell values are
+rendered in tables, not passed to HTML or evaluated as formulas.
+
+### Compatible backend additions
+
+The existing loader could select a known worksheet but could not list worksheet
+names without first loading a table. `list_worksheets(payload, ...)` now exposes
+that metadata using the existing XLSX archive validation, byte limits, and workbook
+cleanup. It does not read worksheet rows or require valid headers in the first
+sheet. All previous signatures remain compatible. Worksheet metadata is cached only for
+the current session and bytes/size-limit combination.
+
+The targeted XLSX import fix adds `inspect_xlsx_import` and optional keyword
+arguments to `load_dataset`. Strict validation remains the default. The planner
+distinguishes a missing header from a completely empty whole worksheet column;
+only the latter can be excluded by `exclude_empty_columns`. Explicit contiguous
+ranges select columns or a rectangle with its own header row. Selected values and
+blank rows are retained unchanged unless explicit blank-row removal is confirmed.
+Missing-name generation and duplicate suffixes
+reserve all existing selected names and require explicit header confirmation.
+
+`inspect_xlsx_layouts` reads worksheets without requiring valid table headers and
+labels empty worksheets. `load_xlsx_regions` returns separate DataFrames atomically,
+never concatenates them, and reuses the same range/header planner as single-table
+loading. Isolated one-cell detected regions use a shared UI/API headerless policy
+so formula/value cells do not disappear into column labels. Naming confirmation
+still applies. Combination is an explicit, reviewed worksheet-aligned import.
+
+Header selection is absolute, inferred, first-row-of-range, or headerless. Inference
+selects the earliest row with the most non-formula text labels among the first 20
+selected rows, with a mandatory review gate. Exact excluded rows and changed header
+coordinates are exposed. Optional irregular-header repair trims/collapses whitespace
+and converts labels to text; all naming collisions use deterministic reserved names.
+Blank-row/column removal considers the whole worksheet and only `None` cells;
+whitespace, zero, booleans and formulas are never classified as blank.
+
+The dashboard displays every column's action plus excluded row spans before
+import. Exclusions and renames require a revision-specific approval checkbox.
+The plan is cached in session state by file digest, sheet, limits, and import
+options; unrelated reruns do not scan the workbook again. Loading recalculates
+the same plan from the same bytes instead of trusting UI-supplied header mappings.
+The source workbook is never written. Import planning is separate from the
+post-import cleaning pipeline and its processing report.
+
+Formula cells are read with `data_only=False`. Ordinary formula strings retain the
+previous public API and are distinguished from literal equals-prefixed text through
+Excel cell-type metadata. Array formulas use an immutable `ExcelFormula` object
+containing their expression, kind and reference. Unsupported formula forms lacking
+an expression block flat import instead of invoking `str` on an openpyxl object.
+The untouched workbook remains the preserving alternative.
+
+XLSX DataFrame attrs hold source row/column coordinates and the original formula
+inventory. The pipeline updates retained row coordinates after filtering; the formula
+inventory remains conservatively attached even if some formula rows are removed.
+Exporters reject imported formulas unless `acknowledge_formula_loss=True`; typed
+formula cells also trigger the guard if attrs were lost. After acknowledgment,
+expressions become protected literal text in the export only. The dashboard retains
+the uploaded bytes and offers an exact original download. It does not patch a
+formatted workbook or claim that reference semantics survive flat export.
+
+The dashboard JSON download adds source provenance and file hash to the existing
+processing report; standalone `export_report` is unchanged. Source attrs are part
+of the controlled pipeline contract, not a guarantee for arbitrary external pandas
+operations that drop metadata or rearrange columns.
+
+### Session lifecycle and invalidation
+
+One `Workspace` instance is held in `st.session_state` per browser session. It owns
+the last valid original/profile, active and loaded source identities, copied
+pipeline configuration, preview, confirmed result, and prepared export artifacts.
+Widget state holds the ordered operation cards and their editable parameters.
+Data is never placed in a global Streamlit data cache or written to persistent storage.
+
+Source identity includes a SHA-256 content digest, filename, encoding, delimiter,
+worksheet, size limit, range, header/exclusion options, and header confirmation.
+Separate-region selections, headerless mode and row-removal approval also participate.
+Configuration identity includes ordered steps and typed
+parameters, stop-on-error policy, and validation errors. Changing either identity
+revokes the preview, confirmed result, and download artifacts immediately on the
+corresponding widget rerun. A revision-specific review checkbox prevents an earlier
+confirmation from carrying over. Reordering and deleting cards also invalidate
+immediately. Failed imports retain the last valid original in memory but hide its
+overview tables/metrics and block processing until the active selection is loaded.
+The loaded-source marker is cleared before each load attempt, including retries
+of an identical source. Revoking import approval also blocks use of retained data.
+Configuration remains visible during pending
+imports to avoid Streamlit discarding hidden widgets' selected values.
+
+Separate imports retain independent original tables. Selecting another active table
+revokes derived results and formula-export acknowledgment. A failed collection load
+cannot adopt a partially loaded table set. Before/After import previews are cached
+with the exact plan; table pagination does not reconstruct the imported dataset.
+Results show compact metrics and meaningful table previews, with diagnostics, source
+coordinates and formula details collapsed by default.
+
+Worksheet structure presentation is deliberately independent of region detection.
+The `dashboard_state` display adapter ranks existing rectangles by bounding area
+(descending), then top/left coordinates, and labels a region as a table candidate
+only when it has at least two rows, two columns and four non-None cells. A single
+cell is isolated; remaining shapes are small/narrow regions. This is a transparent
+display heuristic, not semantic classification or a new detection algorithm.
+The two largest table candidates are shown first; every other region remains selectable
+in a collapsed section. Formula counts come from the engine's formula inventory,
+including array formulas, even when they lie outside the small card preview.
+
+Card previews slice at most 3×4 original cells into an explicitly labeled display
+copy. They never feed imports or exports. Summary metadata is cached by source
+bytes/name/sheet. Card and dropdown selection callbacks update the existing
+mode/region controls and reset the header policy to the selected region's first
+row (or headerless for a singleton) before the widget rerun. Existing source
+identity and revision-based confirmation then
+invalidate stale previews. No independent import or approval path is introduced.
+The import-plan inspection selector changes presentation only; all separate-region
+plans remain loaded and validated. Exact blank ranges, coordinates and diagnostics
+live in collapsed Advanced Details sections. Native buttons have unique coordinate
+labels; selection and formula status use text rather than color alone.
+
+For a new worksheet with multiple substantial candidates, UI state starts in
+`Choose a table`, with no import plan. It never substitutes a candidate for a
+previously selected custom range. Whole-worksheet, custom-range, separate-region
+and combined imports are explicit controls in a collapsed Advanced import options
+section. The original strict default remains for simple worksheets and the Python
+APIs. Selecting `Choose a table` again cancels the pending selection, clears the
+import review, and revokes readiness without deleting the retained original.
+
+The initialization identity uses file bytes/name/sheet, so ordinary reruns do not
+reset a selected range or manually chosen header. New source identities reset UI
+choices and require a fresh review. Custom-range text has a non-widget backing key
+to survive Streamlit's cleanup of progressively hidden widgets. Choosing a table
+resets the header policy only in the explicit selection callback, never during a
+normal rerun. The region dropdown starts with no selection instead of choosing the
+first candidate implicitly.
+
+The UI discovers relevant optional controls through the existing import planner,
+using already-read worksheet records and cached header-policy context. No parallel
+header validation or data-cleaning algorithm is introduced. Missing, non-text and
+duplicate header failures are grouped for display with exact cell coordinates and
+actionable repair guidance. Relevant or already-enabled controls remain visible;
+repairs are never automatically checked. The source DataFrame, formula guards,
+coordinate metadata, exporters, processing pipeline and backend APIs are unchanged.
+
+The lifecycle is explicit:
+
+```text
+Select source/settings -> Load dataset -> Configure ordered steps
+    -> Preview changes -> Review + Apply -> Prepare downloads -> Download
+
+Source or configuration change -> clear preview, confirmation, and exports
+Import failure                 -> retain original in memory, hide overview, block preview
+Preview errors                 -> display partial result, block confirmation
+```
+
+Preview calls `ProcessingPipeline.run` once on the full original dataset. Apply
+copies the reviewed result and report rather than recomputing. Export preparation
+calls existing exporters once per format and retains bytes/errors for subsequent
+reruns. Unrelated interactions such as table pagination and comparison layout do
+not re-run processing or export. Download buttons use `on_click="ignore"` to avoid
+an unnecessary processing rerun. Profiles are computed on load and supplied by the
+pipeline for results; the UI does not implement its own statistics.
+
+### Configuration and display adapters
+
+Each card builds the existing `ProcessingStep` with typed widget parameters.
+Constant input types are explicit; decimal constants use Decimal, booleans are
+selected, and dates require ISO input. The backend still validates column/type
+compatibility. The projected schema calls the existing header-normalization
+operation on a zero-row DataFrame, allowing later selectors to show actual renamed
+columns without performing row processing. If reordering makes a selection invalid,
+it remains visible with a validation error instead of silently disappearing.
+
+The pipeline's default stepwise error behavior remains unchanged. The dashboard
+shows partial previews and original-row diagnostics, but deliberately disallows
+confirming previews with errors. Disabling stop-on-error helps inspect more steps;
+it does not override the confirmation gate. Warnings may be reviewed and confirmed.
+The Python API remains available for explicitly managed partial-result workflows.
+
+Tables use a display-only string copy of 100-row pages. This avoids Arrow coercion
+of mixed numeric/text columns, exact Decimals, and large integers. Missing cells
+stay null in the display. Page counts and total rows are visible; all pages are
+accessible. This adapter is never input to processing or export. Streamlit's
+`client.disableDataExport` is enforced in both configuration and application startup
+to disable native table downloads/copy, which would bypass formula acknowledgment
+and safe serialization. The Download section always exports the full confirmed
+DataFrame. Full row/column counts are shown there explicitly.
+
+Processing errors retain original values and are displayed with step summaries
+and diagnostics. UI diagnostics use one-based original row ordinals (excluding
+the header); the underlying JSON report retains zero-based positions. Expected
+export failures are isolated by format so other downloads remain available. A
+final UI exception boundary reports unexpected failures, logs details locally,
+and invalidates derived results while preserving the original.
+
+### Local operation and limits
+
+`.streamlit/config.toml` sets the light theme, loopback binding, default 10 MiB
+upload cap, and disabled usage telemetry. The user can tighten the per-file limit
+in the UI. Raising the cap requires changing the server configuration/restarting,
+then selecting a larger UI limit. XLSX expanded archive validation remains at
+100 MiB. Uploaded data, full processing copies, and exports consume memory;
+byte limits are not a guarantee of peak RAM usage. Sessions are transient and
+workspaces are lost on reset/session loss/server restart. There is no database,
+authentication layer, external processing API, or cloud deployment.
+
+### Automated and manual verification boundaries
+
+State tests exercise source/settings identity, invalidation, configuration order,
+confirmation guards, non-mutation, complete exports despite display pagination,
+typed constants, and worksheet discovery. Streamlit AppTest exercises actual
+upload widget values and controls, worksheet selection, import failures, operation
+editing/reordering, preview/apply, errors, reset, and download widgets/artifacts.
+Original Phase 1/2 tests remain intact. Server smoke checks verify loopback HTTP
+startup, the root page, and the health endpoint, then stop the owned server.
+
+The targeted regression fixture `tests/fixtures/sayfa1.xlsx` is a byte-identical
+copy of the supplied workbook, with an accompanying SHA-256. It actually contains
+`eko` and empty `Sayfa2`; tests verify leading rows 1:5, columns A:C, both main
+tables, detached cells and the F8 array formula. A separately labeled synthetic
+sample adds trailing blanks, extra duplicate headers and additional mixed types.
+AppTest verifies both import flows, separate-table switching, source/preview
+invalidation, explicit formula export gates and original-byte preservation.
+
+AppTest is headless: it does not establish pixel-level layout quality, native file
+picker behavior, browser save dialogs, or spreadsheet application behavior. Those
+remain explicit manual checks. This implementation stays within Phase 3; it does
+not begin the broader Phase 4 refinement or Phase 5 publication work.

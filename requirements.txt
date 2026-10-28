@@ -1,2 +1,2 @@
-# Install the local package and its test dependencies from pyproject.toml.
--e .[test]
+# Install the dashboard and test dependencies from pyproject.toml.
+-e .[ui,test]

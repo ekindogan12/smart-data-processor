@@ -17,6 +17,7 @@ from openpyxl import Workbook
 from .models import Issue
 from .profiler import DatasetProfile
 from .validators import DataValidationError, validate_dataframe
+from .excel_layout import ExcelFormula
 
 _INVALID_XML_TEXT = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 
@@ -118,6 +119,11 @@ def _formula_like(text: str) -> bool:
 
 def _export_scalar(value: Any) -> Any:
     """Represent supported scalar cells explicitly; never stringify containers."""
+    if isinstance(value, ExcelFormula):
+        # Formula acknowledgment is validated before serialization begins.
+        if value.expression is None:
+            raise DataValidationError("This formula has no scalar expression. Download the original workbook instead.")
+        return value.expression
     if not pd.api.types.is_scalar(value):
         raise DataValidationError("Exports require scalar spreadsheet cell values.")
     if pd.isna(value):
@@ -141,7 +147,23 @@ def _export_scalar(value: Any) -> Any:
     raise DataValidationError(f"Unsupported export cell type: {type(value).__name__}.")
 
 
-def export_csv(data: pd.DataFrame, *, delimiter: str = ",") -> ExportResult:
+def _acknowledge_flat_formulas(data: pd.DataFrame, acknowledged: bool) -> tuple[Issue, ...]:
+    """Imported formula provenance survives processing; never silently flatten it."""
+    if type(acknowledged) is not bool:
+        raise DataValidationError("acknowledge_formula_loss must be boolean.")
+    has_typed_formula = any(isinstance(value, ExcelFormula) for row in data.itertuples(index=False, name=None) for value in row)
+    if not data.attrs.get("xlsx_source", {}).get("formulas") and not has_typed_formula:
+        return ()
+    if not acknowledged:
+        raise DataValidationError(
+            "Imported Excel formulas cannot remain functional in this flat export. "
+            "Set acknowledge_formula_loss=True to export protected literal expressions, "
+            "or keep the unchanged original workbook."
+        )
+    return (Issue("formula_functionality_loss", "Explicitly acknowledged: flat export stores formula expressions as protected text, not working formulas. Formatting and merged cells are not preserved."),)
+
+
+def export_csv(data: pd.DataFrame, *, delimiter: str = ",", acknowledge_formula_loss: bool = False) -> ExportResult:
     """Return UTF-8 CSV; quote every field and prefix formula-like text with '.
 
     Protection includes headers and leading whitespace/control characters. Native
@@ -149,6 +171,7 @@ def export_csv(data: pd.DataFrame, *, delimiter: str = ",") -> ExportResult:
     empty. Protection is mandatory and changes only the exported representation.
     """
     validate_dataframe(data)
+    formula_warnings = _acknowledge_flat_formulas(data, acknowledge_formula_loss)
     if not isinstance(delimiter, str) or len(delimiter) != 1 or delimiter in '\r\n\x00"':
         raise DataValidationError("delimiter must be one character other than newline, NUL, or quote.")
     buffer = StringIO(newline="")
@@ -176,16 +199,17 @@ def export_csv(data: pd.DataFrame, *, delimiter: str = ",") -> ExportResult:
         content = buffer.getvalue().encode("utf-8")
     except UnicodeEncodeError as exc:
         raise DataValidationError("CSV text contains invalid Unicode characters.") from exc
-    return ExportResult(content, "text/csv", protected, warnings)
+    return ExportResult(content, "text/csv", protected, formula_warnings + warnings)
 
 
-def export_xlsx(data: pd.DataFrame, *, sheet_name: str = "Processed Data") -> ExportResult:
+def export_xlsx(data: pd.DataFrame, *, sheet_name: str = "Processed Data", acknowledge_formula_loss: bool = False) -> ExportResult:
     """Return XLSX bytes with all text explicitly stored as strings, never formulas.
 
     Dates use ISO text. Decimal and >15-digit integer values use text to preserve
     precision. Reject Excel limits/illegal XML controls instead of truncating.
     """
     validate_dataframe(data)
+    formula_warnings = _acknowledge_flat_formulas(data, acknowledge_formula_loss)
     if (
         not isinstance(sheet_name, str) or not sheet_name.strip() or len(sheet_name) > 31
         or re.search(r"[\\/*?:\[\]]", sheet_name) or _INVALID_XML_TEXT.search(sheet_name)
@@ -237,5 +261,5 @@ def export_xlsx(data: pd.DataFrame, *, sheet_name: str = "Processed Data") -> Ex
         warnings.append(Issue("precision_protection", f"Stored {precision} Decimal/large integer cells as text to preserve precision."))
     return ExportResult(
         buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        protected, tuple(warnings),
+        protected, formula_warnings + tuple(warnings),
     )
