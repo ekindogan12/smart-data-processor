@@ -13,13 +13,22 @@ from typing import Any
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.comments import Comment
 
 from .models import Issue
 from .profiler import DatasetProfile
 from .validators import DataValidationError, validate_dataframe
 from .excel_layout import ExcelFormula
+from .excel_provenance import formula_expressions
 
 _INVALID_XML_TEXT = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
+FLAT_FORMULA_NOTICE = (
+    "Formula expressions are protected text, not working formulas. References still describe "
+    "the original workbook; they are not translated or validated. Referenced cells may be "
+    "missing or moved in this export. Formatting and merged cells are not preserved. "
+    "Use the unchanged original workbook to retain its formula definitions and layout."
+)
 
 
 @dataclass(frozen=True)
@@ -160,7 +169,7 @@ def _acknowledge_flat_formulas(data: pd.DataFrame, acknowledged: bool) -> tuple[
             "Set acknowledge_formula_loss=True to export protected literal expressions, "
             "or keep the unchanged original workbook."
         )
-    return (Issue("formula_functionality_loss", "Explicitly acknowledged: flat export stores formula expressions as protected text, not working formulas. Formatting and merged cells are not preserved."),)
+    return (Issue("formula_functionality_loss", "Explicitly acknowledged: " + FLAT_FORMULA_NOTICE),)
 
 
 def export_csv(data: pd.DataFrame, *, delimiter: str = ",", acknowledge_formula_loss: bool = False) -> ExportResult:
@@ -225,6 +234,7 @@ def export_xlsx(data: pd.DataFrame, *, sheet_name: str = "Processed Data", ackno
     worksheet = workbook.active
     worksheet.title = sheet_name
     protected, precision = 0, 0
+    formulas = formula_expressions(data)
 
     def write_row(row_number, values):
         nonlocal protected, precision
@@ -245,6 +255,8 @@ def export_xlsx(data: pd.DataFrame, *, sheet_name: str = "Processed Data", ackno
             cell = worksheet.cell(row_number, column_number, value)
             if isinstance(value, str):
                 cell.data_type = "s"  # Also protects headers, formulas, and Excel error-looking text.
+            if isinstance(raw, ExcelFormula) or isinstance(raw, str) and raw in formulas:
+                cell.comment = Comment(FLAT_FORMULA_NOTICE, "Smart Data Processor")
 
     try:
         write_row(1, data.columns)

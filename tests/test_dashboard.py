@@ -421,6 +421,57 @@ def test_formula_export_gate_and_original_download_are_explicit(app, sayfa1_like
     assert not app.exception
 
 
+def test_formula_text_cleaning_review_and_export_safety_survive_reruns(app, sayfa1_workbook):
+    from openpyxl import load_workbook
+
+    app.file_uploader[0].upload("sayfa1.xlsx", sayfa1_workbook).run()
+    app.button(key="region_card_K6:N9").click().run()
+    approve_excel_import(app)
+    app.button(key="load_dataset").click().run()
+    workspace = app.session_state["workspace"]
+    key = add_step(app, "Clean text", ["c"])
+    app.selectbox(key=f"{key}_text").select("lower").run()
+    preview_and_apply(app)
+    assert workspace.applied.data["c"].tolist() == ["=L7+M7", "=L8+M8", "=L9+M9"]
+    assert any("referenced cells may be missing or moved" in warning.value for warning in app.warning)
+    app.checkbox(key=f"formula_ack_{workspace.revision}").check().run()
+    app.button(key="prepare_downloads").click().run()
+    artifact = workspace.exports["xlsx"].content
+    app.run()
+    assert workspace.exports["xlsx"].content == artifact
+    workbook = load_workbook(BytesIO(artifact))
+    try:
+        assert workbook.active["D2"].data_type == "s"
+        assert "not translated or validated" in workbook.active["D2"].comment.text
+    finally:
+        workbook.close()
+    assert json.loads(workspace.exports["json"].content)["formula_loss_acknowledged"]
+    app.selectbox(key=f"{key}_text").select("upper").run()
+    assert workspace.applied is None and workspace.preview is None and not workspace.exports
+    assert not workspace.formula_loss_acknowledged
+    assert workspace.source_bytes == sayfa1_workbook
+    assert not app.exception
+
+
+def test_oversized_grid_upload_hides_previous_result_and_downloads(app, monkeypatch, workbook_bytes):
+    from smart_data_processor import file_handler
+
+    upload(app)
+    preview_and_apply(app)
+    app.button(key="prepare_downloads").click().run()
+    workspace = app.session_state["workspace"]
+    original = workspace.original.copy(deep=True)
+    monkeypatch.setattr(file_handler, "_MAX_WORKSHEET_CELLS", 3)
+    payload = workbook_bytes({"Data": [["id", "value"], [1, 2]]}).getvalue()
+    app.file_uploader[0].upload("oversized.xlsx", payload).run()
+    assert any("4 cells" in error.value and "3-cell inspection limit" in error.value for error in app.error)
+    assert not workspace.source_current and workspace.applied is None and not workspace.exports
+    assert not app.metric and not app.get("download_button")
+    assert app.button(key="load_dataset").disabled
+    assert_frame_equal(workspace.original, original)
+    assert not app.exception
+
+
 def test_switch_to_empty_sheet_revokes_current_data(app, sayfa1_like_workbook):
     open_sparse_workbook(app, sayfa1_like_workbook)
     app.button(key="region_card_D4:H8").click().run()

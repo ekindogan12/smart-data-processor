@@ -383,6 +383,15 @@ class Workspace:
                     )
                 else:
                     report = json.loads(export_report(self.applied.report))
+                    # Export diagnostics describe these artifacts, separately from
+                    # the unchanged processing report schema. JSON runs last.
+                    report["exports"] = {
+                        kind: ({"status": "ready", "protected_cell_count": self.exports[kind].protected_cell_count,
+                                "warnings": [asdict(issue) for issue in self.exports[kind].warnings]}
+                               if kind in self.exports else {"status": "failed", "error": self.export_errors[kind]})
+                        for kind in ("csv", "xlsx")
+                    }
+                    report["formula_loss_acknowledged"] = self.formula_loss_acknowledged
                     if self.applied.data.attrs.get("xlsx_source"):
                         report["xlsx_source"] = deepcopy(self.applied.data.attrs["xlsx_source"])
                         report["source_sha256"] = hashlib.sha256(self.source_bytes).hexdigest()

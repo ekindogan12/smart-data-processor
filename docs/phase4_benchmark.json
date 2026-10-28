@@ -1,0 +1,59 @@
+{
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.9",
+    "pandas": "3.1.0",
+    "openpyxl": "3.1.5",
+    "streamlit": "1.66.1"
+  },
+  "method": "One run per stage; input generation excluded; wall-clock seconds; no memory measurement.",
+  "datasets": [
+    {
+      "name": "sales.csv",
+      "input_bytes": 2652050,
+      "input_shape": [
+        51000,
+        8
+      ],
+      "output_shape": [
+        50000,
+        8
+      ],
+      "seconds": {
+        "load": 0.1221,
+        "pipeline": 0.3914,
+        "export_csv": 0.6827,
+        "export_xlsx": 10.5282
+      },
+      "export_bytes": {
+        "csv": 3250065,
+        "xlsx": 1357940
+      },
+      "checks": "Passed: dimensions, non-mutation, no executable exported formulas."
+    },
+    {
+      "name": "sales.xlsx",
+      "input_bytes": 307800,
+      "input_shape": [
+        10000,
+        8
+      ],
+      "output_shape": [
+        10000,
+        8
+      ],
+      "seconds": {
+        "worksheet_analysis": 1.5631,
+        "load": 1.4566,
+        "pipeline": 7.301,
+        "export_csv": 1.1431,
+        "export_xlsx": 4.4281
+      },
+      "export_bytes": {
+        "csv": 697900,
+        "xlsx": 426880
+      },
+      "checks": "Passed: dimensions, non-mutation, no executable exported formulas."
+    }
+  ]
+}

@@ -411,7 +411,7 @@ def _upload(workspace: Workspace) -> None:
                 excel_options, upload_error, approval_pending = _excel_import_options(payload, filename, sheet, int(limit), layout)
             else:
                 upload_error = st.session_state.catalog_error or "No worksheets are available in this workbook."
-            st.caption("Only the selected worksheet is loaded. Formula expressions are preserved as text.")
+            st.caption("Only the selected worksheet is loaded. Formula definitions are retained without calculation; flat exports require acknowledgment when formulas are present.")
     options = ImportOptions(encoding, delimiter, sheet, int(limit) * 1024**2, **excel_options)
     prior_source = workspace.active_source
     workspace.observe_source(payload, filename, options)
@@ -666,7 +666,7 @@ def _downloads(workspace: Workspace) -> None:
     st.write(f"Export all {len(workspace.applied.data):,} rows and {len(workspace.applied.data.columns):,} columns of the confirmed result.")
     st.caption("Spreadsheet formula protection is always enabled. Export warnings appear below; your in-memory data stays unchanged.")
     if has_formulas:
-        st.warning("This workbook contains formulas. Flat exports store expressions as protected literal text; formula functionality, formatting and merged cells are not preserved.")
+        st.warning("This workbook contains formulas. Flat exports store expressions as protected literal text; formula functionality, formatting and merged cells are not preserved. References still describe the original workbook: referenced cells may be missing or moved. References are not translated or validated. Use the unchanged original download to retain the workbook's formula definitions and layout.")
         acknowledged = st.checkbox("I accept the loss of formula functionality in the flat CSV/XLSX exports.",
                                    key=f"formula_ack_{workspace.revision}")
         workspace.acknowledge_formula_loss(acknowledged)

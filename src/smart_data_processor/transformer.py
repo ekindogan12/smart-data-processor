@@ -9,6 +9,8 @@ import unicodedata
 import pandas as pd
 
 from .models import Issue, OperationResult
+from .excel_layout import ExcelFormula
+from .excel_provenance import formula_expressions
 from .validators import (
     DataValidationError, scalar_kind, validate_columns, validate_dataframe, validate_headers,
 )
@@ -17,18 +19,22 @@ from .validators import (
 def clean_text(
     data: pd.DataFrame, *, columns: Sequence[str], operation: str = "trim"
 ) -> OperationResult:
-    """Apply one text operation, preserving nulls and reporting non-text cells."""
+    """Apply text operations; preserve nulls and known Excel formula expressions."""
     validate_dataframe(data)
     selected = validate_columns(columns, list(data.columns), option="columns")
     methods = {"trim": str.strip, "lower": str.lower, "upper": str.upper, "title": str.title}
     if not isinstance(operation, str) or operation not in methods:
         raise DataValidationError("Text operation must be trim, lower, upper, or title.")
     result = data.copy(deep=True)
+    formulas = formula_expressions(data)
     affected, warnings = set(), []
     for name in selected:
         values = data[name].tolist()
         changed = False
         for position, value in enumerate(values):
+            if isinstance(value, ExcelFormula) or isinstance(value, str) and value in formulas:
+                warnings.append(Issue("formula_preserved", "Excel formula expression left unchanged by text cleaning.", name, position))
+                continue
             if pd.isna(value):
                 continue
             if not isinstance(value, str):

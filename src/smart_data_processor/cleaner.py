@@ -11,6 +11,7 @@ from .validators import (
     DataValidationError, scalar_kind, series_kind, validate_columns, validate_dataframe,
 )
 from .models import Issue, OperationResult
+from .excel_provenance import formula_expressions, retain_source_rows
 
 
 def remove_duplicates(
@@ -29,6 +30,7 @@ def remove_duplicates(
     columns must participate in the duplicate key. Output retains original
     values, dtypes, row order, and index labels. Missing-value equivalence
     follows pandas ``DataFrame.duplicated`` semantics.
+    Known Excel formula expressions remain case-sensitive during comparison.
     """
     validate_dataframe(data)
     if not (keep is False or isinstance(keep, str) and keep in {"first", "last"}):
@@ -40,16 +42,17 @@ def remove_duplicates(
         case_insensitive_columns, selected, option="case_insensitive_columns"
     )
     comparison = data.loc[:, selected].copy(deep=True)
+    formulas = formula_expressions(data)
     for name in insensitive:
         comparison[name] = comparison[name].map(
-            lambda value: value.casefold() if isinstance(value, str) else value
+            lambda value: value.casefold() if isinstance(value, str) and value not in formulas else value
         )
     try:
         duplicates = comparison.duplicated(keep=keep)
     except TypeError as exc:
         raise DataValidationError("Duplicate comparison requires scalar, hashable cell values.") from exc
     # Positional selection also handles repeated index labels correctly.
-    return data.iloc[~duplicates.to_numpy()].copy(deep=True)
+    return retain_source_rows(data, (position for position, duplicate in enumerate(duplicates) if not duplicate))
 
 
 def handle_missing(
@@ -82,7 +85,7 @@ def handle_missing(
         removed = tuple(i for i, flag in enumerate(missing) if flag)
         retained = tuple(i for i, flag in enumerate(missing) if not flag)
         return OperationResult(
-            result.iloc[list(retained)].copy(deep=True), removed,
+            retain_source_rows(data, retained), removed,
             retained_positions=retained,
         )
 

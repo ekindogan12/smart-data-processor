@@ -20,6 +20,7 @@ from .excel_layout import ExcelFormula, WorksheetLayout, analyze_worksheet
 
 DEFAULT_MAX_SIZE_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+_MAX_WORKSHEET_CELLS = 2_000_000
 
 
 def load_dataset(
@@ -251,7 +252,19 @@ def load_xlsx_regions(payload: bytes, *, sheet_name: str | int = 0,
 
 
 def _worksheet_layout(worksheet) -> WorksheetLayout:
-    rows = list(worksheet.iter_rows())
+    # A tiny archive can declare an enormous, mostly blank worksheet. Bound
+    # materialization before iterating; never truncate a selected dataset.
+    cells = (worksheet.max_row or 0) * (worksheet.max_column or 0)
+
+    def check_size(cells):
+        if cells > _MAX_WORKSHEET_CELLS:
+            raise FileValidationError(
+                f"Worksheet {worksheet.title!r} spans {cells:,} cells including blanks, "
+                f"exceeding the {_MAX_WORKSHEET_CELLS:,}-cell inspection limit. Remove unused rows/columns "
+                "in a copy of the original workbook, or provide a smaller workbook. No data was imported."
+            )
+
+    check_size(cells)
     formulas, details = [], []
 
     def value_of(cell):
@@ -266,7 +279,12 @@ def _worksheet_layout(worksheet) -> WorksheetLayout:
                 details.append((cell.coordinate, value.kind, value.ref))
         return value
 
-    records = [tuple(value_of(cell) for cell in row) for row in rows]
+    # Retain values, not a second full collection of openpyxl Cell objects.
+    records, scanned_cells = [], 0
+    for row in worksheet.iter_rows():
+        scanned_cells += len(row)
+        check_size(scanned_cells)  # Also bound workbooks with no declared dimensions.
+        records.append(tuple(value_of(cell) for cell in row))
     return analyze_worksheet(records, worksheet.title, formulas, details)
 
 

@@ -1,4 +1,4 @@
-# Phase 1–3 architecture decisions
+# Phase 1–4 architecture decisions
 
 The proposal is the specification; its phase boundaries take precedence over the
 full-product acceptance criteria. The current deliverable is a tested Python
@@ -431,5 +431,69 @@ invalidation, explicit formula export gates and original-byte preservation.
 
 AppTest is headless: it does not establish pixel-level layout quality, native file
 picker behavior, browser save dialogs, or spreadsheet application behavior. Those
-remain explicit manual checks. This implementation stays within Phase 3; it does
-not begin the broader Phase 4 refinement or Phase 5 publication work.
+remain explicit manual checks. Phase 4 adds the focused reliability work below;
+Phase 5 publication work has not begun.
+
+## Phase 4: formula and workflow reliability
+
+### Formula references and export semantics
+
+A flat export creates a new coordinate system and usually omits other sheets,
+names, tables and external-workbook context. Relative-reference translation alone
+cannot prove that a formula is valid: removing a blank column or filtering a row
+can change references nonuniformly, and INDIRECT, structured references and array
+formulas need workbook-level semantics. Consequently this engine deliberately has
+**no executable-formula export mode**. Original definitions remain in memory;
+the byte-for-byte original download is the preservation path. It does not repair
+already broken source formulas or include cleaning changes.
+
+After explicit acknowledgment, XLSX stores expressions as string cells and adds
+cell comments explaining that references describe the source workbook and are
+neither translated nor validated. CSV uses protected literal text. These notes and
+export warnings cover omitted/moved cells without claiming a formula dependency
+analysis. They do not change data values, coordinates, worksheet dimensions or the
+processing report. No formula engine, workbook rewriting, or dependency was added.
+
+The dashboard JSON report now adds `exports` (per-format success/failure,
+protection counts and warnings) and `formula_loss_acknowledged`. These are artifact
+diagnostics, separate from `ProcessingReport` and its unchanged schema/API. JSON
+is prepared after CSV/XLSX; changing acknowledgment clears all cached artifacts,
+so the report records the current decision. Existing source coordinates and source
+SHA-256 remain present. Source selection/configuration changes revoke approval,
+the preview, applied data and downloads as before.
+
+### Preserving definitions during cleaning
+
+Ordinary Excel formulas retain their existing string API. `excel_provenance`
+derives a set of known source expressions from metadata; text cleaning skips
+these and typed `ExcelFormula` values with per-cell warnings. Case-insensitive
+duplicate comparison also preserves expression case, including quoted literals.
+Expression-based protection intentionally includes literal strings matching known
+formulas and copies introduced by explicit fills. It remains conservative after
+formula rows are removed. External callers that drop metadata cannot recover
+ordinary formula identity, but exporters still write all strings inertly.
+
+The same helper module keeps source row numbers aligned for **standalone**
+duplicate removal and missing-row removal, including repeated DataFrame index
+labels. Pipeline provenance remains positional and compatible. Arbitrary external
+pandas reshaping/reordering is outside this provenance contract.
+
+### Resource and performance boundaries
+
+Worksheet values are collected directly from the read-only iterator without first
+retaining a second collection of openpyxl cell objects. Declared grids over
+2,000,000 cells (including blanks) fail before materialization; a running cell
+count also bounds workbooks without declared dimensions. There is no truncation.
+The guard also applies to selected ranges because the current importer analyzes
+the complete worksheet. Names-only discovery does not materialize cells. The UI
+inspects every worksheet and rejects a workbook if any sheet exceeds the limit.
+Existing upload/expanded-archive limits remain in force. These limits are not a
+guarantee of peak RAM: multiple sheets, copies, comments and output buffers also
+consume memory. No region-detection algorithm or public function signature changed.
+
+The reproducible benchmark measures load, worksheet analysis, ordered processing
+and both exports, with data-generation time excluded. It checks full output sizes,
+non-mutation and absence of executable formulas. Formula comments add output size
+and serialization time intentionally. Timings are observations rather than brittle
+test thresholds. See [Phase 4 validation](phase4_validation.md) and the recorded
+JSON results for the tested environment, exact outcomes and limitations.
