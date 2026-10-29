@@ -1,6 +1,8 @@
 # Phase 4 validation and readiness
 
-Validated locally on 2026-10-28. Phase 5 has not been started.
+Validated locally on 2026-10-28. This is the historical Phase 4 record, from before
+Phase 5 preparation. See the [current release checklist](portfolio/release_checklist.md)
+for subsequent tests, screenshot captures and publication status.
 
 ## Findings and fixes
 

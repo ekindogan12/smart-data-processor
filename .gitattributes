@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Stable input hash and expected export bytes for the cross-platform demo.
+sample_data/portfolio_sales_raw.csv text eol=lf
+sample_data/portfolio_sales_expected.csv text eol=lf
+# Spaces at field boundaries are intentional cleaning examples in the raw CSV.
+sample_data/portfolio_sales_raw.csv whitespace=-blank-at-eol

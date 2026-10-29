@@ -1,0 +1,135 @@
+{
+  "dataset": "Synthetic portfolio sales; not customer data",
+  "input_sha256": "800bd2f5956ebe8a784e785fbfbf472466bd8c8a596ddb046aa7390d4da5ab17",
+  "before": {
+    "row_count": 12,
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "order_id",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "customer",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "region",
+        "dtype": "object",
+        "missing_count": 1,
+        "missing_percentage": 8.333333333333332
+      },
+      {
+        "name": "order_date",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "product",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "quantity",
+        "dtype": "object",
+        "missing_count": 1,
+        "missing_percentage": 8.333333333333332
+      },
+      {
+        "name": "unit_price",
+        "dtype": "object",
+        "missing_count": 1,
+        "missing_percentage": 8.333333333333332
+      },
+      {
+        "name": "status",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      }
+    ],
+    "missing_value_count": 3,
+    "duplicate_row_count": 2
+  },
+  "after": {
+    "row_count": 10,
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "order_id",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "customer",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "region",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "order_date",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "product",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "quantity",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "unit_price",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      },
+      {
+        "name": "status",
+        "dtype": "object",
+        "missing_count": 0,
+        "missing_percentage": 0.0
+      }
+    ],
+    "missing_value_count": 0,
+    "duplicate_row_count": 0
+  },
+  "status": "completed",
+  "steps": 7,
+  "exports": {
+    "csv": {
+      "protected_cell_count": 0,
+      "warnings": []
+    },
+    "xlsx": {
+      "protected_cell_count": 0,
+      "warnings": [
+        {
+          "code": "precision_protection",
+          "message": "Stored 8 Decimal/large integer cells as text to preserve precision.",
+          "column": null,
+          "row_position": null
+        }
+      ]
+    }
+  }
+}

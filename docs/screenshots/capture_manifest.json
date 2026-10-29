@@ -1,0 +1,43 @@
+{
+  "capture_date": "2026-10-28",
+  "browser": "Edg/156.0.4314.50",
+  "method": "Real local Streamlit application in headless Edge; mouse/keyboard actions and file upload through Chrome DevTools Protocol; viewport PNG capture. No application state injection, image generation or pixel editing.",
+  "viewport_css_pixels": {
+    "width": 1440,
+    "height": 1050,
+    "device_scale_factor": 1
+  },
+  "input": "sample_data/portfolio_sales_raw.csv",
+  "input_sha256": "800bd2f5956ebe8a784e785fbfbf472466bd8c8a596ddb046aa7390d4da5ab17",
+  "scope": "Synthetic CSV upload, seven configured steps, preview, side-by-side review, confirmation and download preparation. Native file/save dialogs and spreadsheet rendering were not tested.",
+  "captures": [
+    {
+      "file": "01-dashboard-overview.png",
+      "width": 1440,
+      "height": 1050,
+      "bytes": 130766,
+      "sha256": "2b0d9c59a7dd04970d3376ebc762bb17921965d1257024cc9ea742308a07e02c"
+    },
+    {
+      "file": "02-cleaning-configuration.png",
+      "width": 1440,
+      "height": 1050,
+      "bytes": 90560,
+      "sha256": "aa05b9100f044731b880cefc2ae3361a98c16fb126276fff679509940238a74d"
+    },
+    {
+      "file": "03-before-after-results.png",
+      "width": 1440,
+      "height": 1050,
+      "bytes": 142031,
+      "sha256": "779e58bf728c7d02e96e706ffc5ba1fadeba57a64ed9b9620051c1d8cfcf1ff5"
+    },
+    {
+      "file": "04-downloads.png",
+      "width": 1440,
+      "height": 1050,
+      "bytes": 143019,
+      "sha256": "beeba3f07ef62a0db5c7db70c7b2454073db322e3071673e146b58243e48e0db"
+    }
+  ]
+}

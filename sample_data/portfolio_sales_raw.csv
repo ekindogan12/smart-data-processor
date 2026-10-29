@@ -1,0 +1,13 @@
+order_id,customer,region,order_date,product,quantity,unit_price,status
+000101, Ada Morgan , NORTH ,2026-10-01,Notebook Set,2,14.50, PAID 
+000102,BEN RIVERA,south,02/10/2026,Desk Lamp,1,29.90,Paid
+000103,Cleo Park,East,2026-10-03,Pen Set,3,9.99,pending
+000102,BEN RIVERA,south,02/10/2026,Desk Lamp,1,29.90,Paid
+000104, DARA LEE,West,04/10/2026,Monitor Stand,1,45.00,PAID
+000105,Eli Novak,,2026-10-05,Notebook Set,2,14.50,paid
+000106, Farah Lin ,north,06/10/2026,Storage Box,,12.75, Pending 
+000107,Gabe Quinn,SOUTH,2026-10-07,Cable Organizer,4,8.50,paid
+000108,Hana Reed,east,08/10/2026,Mouse Pad,2,,PAID
+000107,Gabe Quinn,SOUTH,2026-10-07,Cable Organizer,4,8.50,paid
+000109,Ivo Chen,west,2026-10-09,Desk Lamp,1,29.90,pending
+000110,Jules Ali, North ,10/10/2026,Document Tray, 2 , 18.00 , Paid 

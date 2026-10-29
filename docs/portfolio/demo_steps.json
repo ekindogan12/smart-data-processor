@@ -1,0 +1,9 @@
+[
+  {"operation": "clean_text", "parameters": {"columns": ["customer", "region", "status", "quantity", "unit_price"], "operation": "trim"}},
+  {"operation": "clean_text", "parameters": {"columns": ["customer", "region", "status"], "operation": "lower"}},
+  {"operation": "remove_duplicates", "parameters": {"keep": "first"}},
+  {"operation": "convert_numeric", "parameters": {"columns": ["quantity", "unit_price"], "decimal_separator": ".", "thousands_separator": null}},
+  {"operation": "handle_missing", "parameters": {"columns": ["quantity", "unit_price"], "strategy": "median"}},
+  {"operation": "handle_missing", "parameters": {"columns": ["region"], "strategy": "constant", "value": "unknown"}},
+  {"operation": "standardize_dates", "parameters": {"columns": ["order_date"], "input_formats": ["%Y-%m-%d", "%d/%m/%Y"]}}
+]

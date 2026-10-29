@@ -1,0 +1,6 @@
+{
+  "title": "CSV & Excel Data Cleaning Dashboard",
+  "role": "Python Developer | Data Processing & Streamlit",
+  "description": "Smart Data Processor is a personal portfolio project for cleaning CSV and Excel data locally. Built with Python, pandas, openpyxl and Streamlit, it supports missing-value handling, duplicate removal, text cleanup, numeric conversion and explicit date formats. Users review changes before applying them, then export CSV, XLSX and JSON reports. The modular engine has automated regression tests and formula-safe exports. The demo uses fictional data; this is not a client deployment or a claim of commercial use.",
+  "skills": ["Python", "Pandas", "Data Cleaning", "Streamlit", "Microsoft Excel"]
+}

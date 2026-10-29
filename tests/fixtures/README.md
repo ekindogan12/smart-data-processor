@@ -4,6 +4,11 @@
 import improvement. Its SHA-256 is stored in `sayfa1.sha256` and asserted by pytest.
 The source workbook was read only; no changes were written back to OneDrive.
 
+On **2026-10-29**, the user explicitly confirmed that this workbook is cleared for
+public redistribution. This resolves the fixture's publication-clearance item;
+the workbook bytes and recorded hash remain unchanged. Repository license selection
+is still pending, and this clearance does not authorize a push or publication.
+
 Observed contents:
 
 - `eko`: reported bounds A1:P15; leading empty rows 1:5 and columns A:C.

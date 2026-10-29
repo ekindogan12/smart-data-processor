@@ -268,4 +268,7 @@ The project will also provide reusable foundations for future freelance work inv
 
 ---
 
-**Project Status:** Proposed — Development Not Yet Started.
+**Implementation status:** Phases 1–4 are implemented. Phase 5 publication materials
+are prepared; public release is subject to the
+[release checklist](docs/portfolio/release_checklist.md). This document retains the
+original proposed scope; the README distinguishes implemented and deferred features.

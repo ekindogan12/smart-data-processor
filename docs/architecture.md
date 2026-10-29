@@ -431,8 +431,9 @@ invalidation, explicit formula export gates and original-byte preservation.
 
 AppTest is headless: it does not establish pixel-level layout quality, native file
 picker behavior, browser save dialogs, or spreadsheet application behavior. Those
-remain explicit manual checks. Phase 4 adds the focused reliability work below;
-Phase 5 publication work has not begun.
+remain explicit manual checks. Phase 4 adds the focused reliability work below.
+Phase 5 preparation and its verification scope are recorded separately in the
+[portfolio release checklist](portfolio/release_checklist.md).
 
 ## Phase 4: formula and workflow reliability
 
@@ -497,3 +498,25 @@ non-mutation and absence of executable formulas. Formula comments add output siz
 and serialization time intentionally. Timings are observations rather than brittle
 test thresholds. See [Phase 4 validation](phase4_validation.md) and the recorded
 JSON results for the tested environment, exact outcomes and limitations.
+
+## Phase 5: documentation and demonstration boundary
+
+Publication preparation does not change application or engine behavior. The concise
+README links to `docs/user_guide.md`, which preserves the detailed import/export
+contracts and Python examples. `docs/portfolio` contains constrained Upwork copy,
+the walkthrough, narration, evidence and a publication checklist.
+
+`scripts/run_portfolio_demo.py` reads an explicitly synthetic CSV and JSON step
+definitions, calls the existing public pipeline/export APIs, and writes named
+artifacts into an ignored output directory. It does not add a configuration-import
+feature to Streamlit. The UI walkthrough enters equivalent controls manually;
+AppTest checks that the resulting CSV matches the script's expected output.
+Decimal precision warnings are retained rather than hidden for presentation.
+
+Real screenshot assets, when captured, are accompanied by browser/data provenance
+and manual reproduction steps. No production deployment, client usage or performance
+improvement is implied. The user-provided regression workbook and its history remain
+intact. The user cleared the workbook for public redistribution on 2026-10-29;
+`.gitignore` cannot remove a tracked file or erase historical copies. License
+selection remains pending. Public publication remains a separate,
+explicitly approved action after the release checklist is resolved.
