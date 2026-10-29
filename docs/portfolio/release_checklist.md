@@ -1,7 +1,7 @@
 # Release-readiness checklist
 
 Prepared on 2026-10-28; clearance decisions updated on 2026-10-29. **Publication
-remains blocked pending license selection and explicit approval.** No push, remote publication, deployment
+requires review of the remaining audit findings and explicit approval.** No push, remote publication, deployment
 or Upwork posting is authorized by this checklist.
 
 ## Prepared materials
@@ -44,23 +44,42 @@ or Upwork posting is authorized by this checklist.
   the current tree **and Git history**; its bytes, recorded hash and regression
   coverage remain unchanged. See [fixture provenance](../../tests/fixtures/README.md).
   A synthetic replacement or history rewrite is not needed for this clearance item.
-- [ ] **Select a repository license.** On **2026-10-29**, the user explicitly chose
-  to leave license selection pending. No LICENSE file or license badge was added.
+- [x] **MIT License selected.** On **2026-10-29**, the user instructed preparation
+  under MIT, replacing the earlier pending decision. The standard [LICENSE](../../LICENSE)
+  records `Copyright (c) 2026 ekndg`, using the sole author identity in Git history.
+  Package metadata references this file. No application functionality changed.
+- [x] Fresh [public-release audit](release_audit.md): 71 tracked files, six commits
+  and 104 historical blobs reviewed, including decompressed workbook XML and image
+  metadata. No credential-pattern matches or unexpected tracked paths were found.
+  The personal-email finding is resolved in the separate public checkout: all
+  six commits use the approved noreply address for author and committer, with
+  identical historical trees. The cleared workbook metadata remains unchanged.
+- [x] Rechecked all 145 Git objects and 73 release-candidate files after the privacy
+  cleanup. No personal-email matches or unexpected pending paths were found.
+- [x] Project-local `.pytest_temp_release/` is writable and ignored. A full retry
+  with a fresh `--basetemp` passed without changing system permissions or tests.
 
 ## Verification record
 
 The demo-specific automated checks passed: **3 passed in 4.54 seconds**. These
 exercise the command-line artifacts, actual Streamlit controls and Upwork limits.
 
-Final complete-suite command and actual outcome:
+Latest complete-suite command and actual outcome (public checkout, 2026-10-29):
 
 ```text
-.\.venv\Scripts\python.exe -m pytest -q
-471 passed in 33.01s
+.\.venv\Scripts\python.exe -m pytest -q --basetemp .pytest_temp_release/run-20261029
+471 passed in 37.05s
 ```
 
-All existing 468 tests were preserved, plus three portfolio checks. No failures or
-skips were reported. Environment: Windows 11, Python 3.13.9, pytest 9.1.1, pandas
+The previous public-checkout attempt had 466 passes and five setup errors because
+pytest could not access its existing system temporary directory. The approved
+project-local basetemp retry above passed all 471 tests, with no failures, errors
+or skips. No tests were modified or skipped. For later runs, use a fresh basetemp
+child directory; pytest manages the contents of the selected directory.
+
+Earlier results: private MIT preparation, 471 passed in 58.28 seconds; Phase 5,
+471 passed in 33.01 seconds. All existing 468 tests and three portfolio checks
+remain intact. Current environment: Windows, Python 3.13.9, pytest 9.2.0, pandas
 3.1.0, openpyxl 3.1.5, Streamlit 1.66.1. The historical Phase 4 record remains in
 [phase4_validation.md](../phase4_validation.md); its timings were not remeasured
 or reused as new performance claims.
@@ -85,8 +104,14 @@ generated XLSX exports, debug logs and browser automation scratch files stay ign
 
 ## Before an approved public release
 
-- [ ] Resolve the remaining license decision; check every dataset and
-  screenshot for publication suitability.
+- [x] Resolve the workbook redistribution and repository license decisions.
+- [x] Resolve the commit-email exposure and verify the approved rewrite in the
+  public checkout. All six author/committer emails use the GitHub noreply address;
+  the private original remains unchanged. See the [2026-10-29 audit](release_audit.md).
+- [x] Pass all 471 tests using a fresh, Git-ignored project-local temporary directory.
+- [ ] Review and commit the nine pending license/release paths, including the
+  `.gitignore` update, with the verified local noreply identity. No commit exists
+  yet for these pending changes. Keep the original backup private.
 - [ ] Review the exact files that will be staged with `git status --short`,
   `git diff --stat`, and `git diff --cached --stat` after staging. Review names and
   content rather than blindly using `git add .`.

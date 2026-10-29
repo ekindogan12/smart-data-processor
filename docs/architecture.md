@@ -517,6 +517,6 @@ Real screenshot assets, when captured, are accompanied by browser/data provenanc
 and manual reproduction steps. No production deployment, client usage or performance
 improvement is implied. The user-provided regression workbook and its history remain
 intact. The user cleared the workbook for public redistribution on 2026-10-29;
-`.gitignore` cannot remove a tracked file or erase historical copies. License
-selection remains pending. Public publication remains a separate,
+`.gitignore` cannot remove a tracked file or erase historical copies. The user
+selected the [MIT License](../LICENSE) on the same date. Public publication remains a separate,
 explicitly approved action after the release checklist is resolved.

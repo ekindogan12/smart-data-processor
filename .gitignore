@@ -45,3 +45,6 @@ node_modules/
 .mypy_cache/
 .tox/
 coverage.xml
+
+# Project-local release verification temporary files.
+/.pytest_temp_release/

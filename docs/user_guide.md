@@ -678,5 +678,6 @@ See [architecture decisions](../docs/architecture.md) for details and limitation
   matrix remain follow-up validation; current measured coverage is documented.
 
 Numeric/categorical distributions and format-inconsistency diagnostics remain
-future profiling enhancements. Phase 5 preparation is documented separately. Publication and license selection
-remain subject to the release checklist.
+future profiling enhancements. Phase 5 preparation is documented separately. The
+repository uses the [MIT License](../LICENSE); publication remains subject to the
+release checklist.

@@ -6,8 +6,9 @@ The source workbook was read only; no changes were written back to OneDrive.
 
 On **2026-10-29**, the user explicitly confirmed that this workbook is cleared for
 public redistribution. This resolves the fixture's publication-clearance item;
-the workbook bytes and recorded hash remain unchanged. Repository license selection
-is still pending, and this clearance does not authorize a push or publication.
+the workbook bytes and recorded hash remain unchanged. The user subsequently selected
+the [MIT License](../../LICENSE) on the same date. This clearance does not authorize
+a push or publication.
 
 Observed contents:
 

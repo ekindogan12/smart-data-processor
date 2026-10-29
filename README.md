@@ -182,7 +182,11 @@ implementation details and limitations are documented in the current guides.
 Development used OpenAI Codex assistance. Portfolio materials describe this as a
 personal project and make no claims of paying customers or commercial deployment.
 
-Publication is **not yet approved**. Review the [release checklist](docs/portfolio/release_checklist.md):
-the user cleared the tracked regression workbook for public redistribution on
-2026-10-29, but repository license selection remains pending. No code or assets have been pushed or
-published automatically. A public repository alone does not establish a reuse license.
+Licensed under the [MIT License](LICENSE), copyright (c) 2026 ekndg, the author
+identity recorded in this repository's Git history. The user selected MIT and
+cleared the tracked regression workbook for public redistribution on 2026-10-29.
+
+Publication is **not yet approved**. Review the [release checklist](docs/portfolio/release_checklist.md)
+and [release audit](docs/portfolio/release_audit.md), including the personal email
+address in commit metadata. No code or assets have been pushed, published or deployed
+automatically.
